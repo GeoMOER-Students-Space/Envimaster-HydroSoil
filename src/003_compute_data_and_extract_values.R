@@ -26,7 +26,7 @@ source(file.path(root_folder, paste0(pathdir,"/001_setup_hydro_withSAGA_v1.R")))
 
 
 # load data
-#dem <- raster::raster(file.path(envrmt$path_001_org,"dem_mof.tif"))
+dem <- raster::raster(file.path(envrmt$path_001_org,"dem_mof.tif"))
 plts<-rgdal::readOGR(file.path(envrmt$path_001_org,"xxx.shp"))
 #set paths
 tmp <- envrmt$path_tmp
@@ -37,17 +37,19 @@ crs(plts)
 
 ################################################################################
 #source functions
-#source(file.path(root_folder, file.path(pathdir,"LEGION_dem/LEGION_dem_v1.4/LEGION_dem_v1_4.R")))
-#source(file.path(root_folder, file.path(pathdir,"LEGION_dem/LEGION_dem_v1.4/sf_LEGION_dem_v1_4.R")))
-source(file.path(root_folder, file.path(pathdir,"REAVER_extraction/REAVER_extraction_v1.1/000_Reaver_extraction_v1.1.R")))
+source(file.path(root_folder, file.path(pathdir,"LEGION_dem/LEGION_dem_v1.4/LEGION_dem_v1_4.R")))
+source(file.path(root_folder, file.path(pathdir,"LEGION_dem/LEGION_dem_v1.4/sf_LEGION_dem_v1_4.R")))
+#source(file.path(root_folder, file.path(pathdir,"REAVER_extraction/REAVER_extraction_v1.1/000_Reaver_extraction_v1.1.R")))
 ################################################################################
 #test LEGION_dem release
 
 #load data
-#stk_mof <- LEGION_dem(dem = dem,tmp = tmp,proj = utm)
-#slop <- stk_mof$slope
-#asp <- stk_mof$aspect
+stk_mof <- LEGION_dem(dem = dem,tmp = tmp,proj = utm,units = 1)
+slop <- stk_mof$slope
+asp <- stk_mof$aspect
 
+stk <- raster::stack(stk_mof$slope,stk_mof$aspect,dem)
+stk
 #writeRaster(slop,file.path(envrmt$path_002_processed,"slope.tif"))
 #writeRaster(asp,file.path(envrmt$path_002_processed,"aspect.tif"))
 
@@ -55,10 +57,19 @@ source(file.path(root_folder, file.path(pathdir,"REAVER_extraction/REAVER_extrac
 
 # extract values
 
-#load data
-dem <- raster::raster(file.path(envrmt$path_001_org,"dem_mof.tif"))
-slp <- raster::raster(file.path(envrmt$path_002_processed,"slope.tif"))
-asp <- raster::raster(file.path(envrmt$path_002_processed,"aspect.tif"))
-stk <- stack(dem,slp,asp)
+#load REAVER extracion points
+source(file.path(root_folder, file.path(pathdir,"REAVER_extraction/REAVER_extraction_v1.1/dev_Reaver_extraction_points_v1.R")))
 
-df <- Reaver_extraction(poly=plts,multilayer = stk,set_ID = T,name = "hydro")
+#load plot positions
+pts <-rgdal::readOGR(file.path(envrmt$path_002_processed,"merged_points.shp"))
+crs(pts)
+utm <- "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+pts<-spTransform(pts,utm)
+crs(pts)
+
+#run Reaver extraction points
+test <- Reaver_extraction_point(pts,stk,set_ID = TRUE)
+
+test
+
+# end of script
